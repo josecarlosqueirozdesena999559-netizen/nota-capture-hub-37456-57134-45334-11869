@@ -27,7 +27,7 @@ const fetchAllNotas = async (): Promise<Nota[]> => {
 
 const DashboardOverview = () => {
   const { toast } = useToast();
-  const { data: notas = [], isLoading } = useQuery({
+  const { data: notas = [], isLoading: isLoadingNotas } = useQuery({
     queryKey: ['dashboardMetrics'],
     queryFn: fetchAllNotas,
     onError: (error: any) => {
@@ -40,7 +40,7 @@ const DashboardOverview = () => {
   });
   
   const [showCodeDialog, setShowCodeDialog] = useState(false);
-  const { user } = useUser();
+  const { user, isLoading: isLoadingUser } = useUser();
 
   // Cálculo das métricas
   const totalNotas = notas.length;
@@ -60,7 +60,7 @@ const DashboardOverview = () => {
     });
   };
 
-  if (isLoading) {
+  if (isLoadingNotas || isLoadingUser) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -141,7 +141,7 @@ const DashboardOverview = () => {
           <Card className="p-6 hover:shadow-lg transition-shadow bg-primary/5 border-primary/20">
             <h4 className="font-bold mb-2 text-primary">Login Mobile Rápido</h4>
             <p className="text-sm text-muted-foreground mb-4">Gere um código temporário para logar no celular sem senha.</p>
-            <Button size="sm" onClick={() => setShowCodeDialog(true)}>
+            <Button size="sm" onClick={() => setShowCodeDialog(true)} disabled={!user}>
               <QrCode className="w-4 h-4 mr-2" />
               Gerar Código
             </Button>
