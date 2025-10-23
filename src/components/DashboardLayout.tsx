@@ -41,6 +41,13 @@ const SidebarContent = ({ onLogout, currentPath, onNavigate, userEmail }: { onLo
 
     <nav className="flex-grow space-y-2">
       <NavItem
+        to="/dashboard"
+        icon={<LayoutDashboard className="w-5 h-5" />}
+        label="Resumo (Dashboard)"
+        isActive={currentPath === "/dashboard" || currentPath === "/dashboard/"}
+        onClick={onNavigate}
+      />
+      <NavItem
         to="/dashboard/notas"
         icon={<Receipt className="w-5 h-5" />}
         label="Notas Fiscais"

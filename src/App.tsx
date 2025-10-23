@@ -5,9 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import DashboardLayout from "./components/DashboardLayout"; // Novo Layout
-import DashboardIndex from "./pages/DashboardIndex"; // Nova página inicial do Dashboard
-import NotasPage from "./pages/NotasPage"; // Nova página de Notas
+import DashboardLayout from "./components/DashboardLayout";
+import DashboardOverview from "./pages/DashboardOverview"; // Importando a nova página de resumo
+import NotasPage from "./pages/NotasPage";
 import MobileCapture from "./pages/MobileCapture";
 import NotFound from "./pages/NotFound";
 
@@ -25,8 +25,8 @@ const App = () => (
           
           {/* Rota protegida com Layout */}
           <Route path="/dashboard" element={<DashboardLayout />}>
-            <Route index element={<NotasPage />} /> {/* Define NotasPage como a rota padrão do /dashboard */}
-            <Route path="notas" element={<NotasPage />} />
+            <Route index element={<DashboardOverview />} /> {/* Rota padrão: Resumo */}
+            <Route path="notas" element={<NotasPage />} /> {/* Rota de Notas: Tabela e Filtros */}
             {/* Adicione outras rotas do dashboard aqui */}
           </Route>
           

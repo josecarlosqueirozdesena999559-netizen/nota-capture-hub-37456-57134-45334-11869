@@ -1,0 +1,143 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Receipt, DollarSign, Users, Loader2, Download } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+
+interface Nota {
+  id: string;
+  empresa_nome: string;
+  valor: number;
+  data_emissao: string;
+}
+
+const fetchAllNotas = async (): Promise<Nota[]> => {
+  const { data, error } = await (supabase as any)
+    .from('notas_fiscais')
+    .select('id, empresa_nome, valor, data_emissao');
+
+  if (error) throw error;
+  return data || [];
+};
+
+const DashboardOverview = () => {
+  const { toast } = useToast();
+  const { data: notas = [], isLoading } = useQuery({
+    queryKey: ['dashboardMetrics'],
+    queryFn: fetchAllNotas,
+    onError: (error: any) => {
+      toast({
+        title: "Erro ao carregar dados",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Cálculo das métricas
+  const totalNotas = notas.length;
+  const valorTotal = notas.reduce((sum, nota) => sum + nota.valor, 0);
+  const fornecedoresUnicos = new Set(notas.map(nota => nota.empresa_nome)).size;
+
+  const formatCurrency = (value: number) => {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
+  // Lógica de Exportação (Exportar PDF com notas colocadas no sistema)
+  const handleExport = () => {
+    // Implementação simples de exportação de dados para PDF/CSV
+    toast({
+      title: "Exportação em desenvolvimento",
+      description: "A funcionalidade de exportar PDF/CSV com dados filtrados será implementada em breve.",
+      variant: "default",
+    });
+    // TODO: Implementar a lógica de exportação de PDF com pdf-lib
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <h2 className="text-3xl font-bold">Dashboard de Resumo</h2>
+        <Button onClick={handleExport} variant="outline">
+          <Download className="w-4 h-4 mr-2" />
+          Exportar Dados
+        </Button>
+      </div>
+
+      {/* Cards de Métricas */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Notas</CardTitle>
+            <Receipt className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalNotas}</div>
+            <p className="text-xs text-muted-foreground">Notas cadastradas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-secondary">{formatCurrency(valorTotal)}</div>
+            <p className="text-xs text-muted-foreground">Soma de todas as notas</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Fornecedores Únicos</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{fornecedoresUnicos}</div>
+            <p className="text-xs text-muted-foreground">Empresas emitentes</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Informativos e Ações Rápidas */}
+      <div className="space-y-4">
+        <h3 className="text-xl font-semibold">Ações Rápidas</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <h4 className="font-bold mb-2">Gerenciar Notas</h4>
+            <p className="text-sm text-muted-foreground mb-4">Visualize a lista completa, filtre e baixe os documentos.</p>
+            <Link to="/dashboard/notas">
+              <Button size="sm" variant="secondary">
+                <Receipt className="w-4 h-4 mr-2" />
+                Ir para Notas Fiscais
+              </Button>
+            </Link>
+          </Card>
+          <Card className="p-6 hover:shadow-lg transition-shadow">
+            <h4 className="font-bold mb-2">Captura Mobile</h4>
+            <p className="text-sm text-muted-foreground mb-4">Use seu celular para adicionar novas notas rapidamente.</p>
+            <Link to="/mobile">
+              <Button size="sm" variant="outline">
+                <Loader2 className="w-4 h-4 mr-2" />
+                Acessar Captura
+              </Button>
+            </Link>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardOverview;
