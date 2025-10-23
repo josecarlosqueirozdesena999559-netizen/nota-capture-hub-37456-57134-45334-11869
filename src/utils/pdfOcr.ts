@@ -1,5 +1,6 @@
 import * as pdfjsLib from "pdfjs-dist";
 import Tesseract from "tesseract.js";
+import { PDFDocument, rgb } from "pdf-lib";
 
 // Configurar o worker do PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
@@ -103,34 +104,91 @@ export async function downloadPdfWithOcr(
   onProgress?: (progress: OcrProgress) => void
 ): Promise<void> {
   try {
+    onProgress?.({ status: "Carregando PDF...", progress: 0 });
+    
     // Converte data URL para Blob
     const response = await fetch(pdfDataUrl);
     const pdfBlob = await response.blob();
+    const arrayBuffer = await pdfBlob.arrayBuffer();
 
-    // Extrai texto com OCR
-    const extractedText = await extractTextFromPdf(pdfBlob, "por", onProgress);
+    // Carrega o PDF original e extrai texto
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const totalPages = pdf.numPages;
 
-    // Cria um arquivo de texto com o conteúdo extraído
-    const textBlob = new Blob([extractedText], { type: "text/plain;charset=utf-8" });
-    const textFileName = fileName.replace(".pdf", "_texto.txt");
+    onProgress?.({ status: "Processando OCR...", progress: 10 });
 
-    // Download do PDF original
-    const pdfLink = document.createElement("a");
-    pdfLink.href = pdfDataUrl;
-    pdfLink.download = fileName;
-    document.body.appendChild(pdfLink);
-    pdfLink.click();
-    document.body.removeChild(pdfLink);
+    // Carrega o PDF com pdf-lib para adicionar texto
+    const pdfDoc = await PDFDocument.load(arrayBuffer);
+    const pages = pdfDoc.getPages();
 
-    // Download do texto extraído
-    const textUrl = URL.createObjectURL(textBlob);
-    const textLink = document.createElement("a");
-    textLink.href = textUrl;
-    textLink.download = textFileName;
-    document.body.appendChild(textLink);
-    textLink.click();
-    document.body.removeChild(textLink);
-    URL.revokeObjectURL(textUrl);
+    // Processa cada página
+    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      
+      // Renderiza em canvas
+      const viewport = page.getViewport({ scale: 2.0 });
+      const canvas = document.createElement("canvas");
+      const context = canvas.getContext("2d");
+      
+      if (!context) {
+        throw new Error("Não foi possível criar contexto do canvas");
+      }
+
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+
+      await page.render({
+        canvasContext: context,
+        viewport: viewport
+      } as any).promise;
+
+      // Faz OCR nessa página
+      const progressBase = 10 + ((pageNum - 1) / totalPages) * 80;
+      
+      const { data } = await Tesseract.recognize(canvas, "por", {
+        langPath: "https://tessdata.projectnaptha.com/4.0.0",
+        logger: (m) => {
+          if (m.status === "recognizing text" && m.progress != null) {
+            const pageProgress = progressBase + (m.progress * 80) / totalPages;
+            onProgress?.({
+              status: `OCR página ${pageNum}/${totalPages}...`,
+              progress: Math.round(pageProgress),
+            });
+          }
+        },
+      });
+
+      // Adiciona o texto como camada invisível no PDF
+      const pdfPage = pages[pageNum - 1];
+      const { height } = pdfPage.getSize();
+      
+      // Adiciona texto em fonte muito pequena e transparente
+      pdfPage.drawText(data.text, {
+        x: 0,
+        y: height,
+        size: 0.1,
+        color: rgb(1, 1, 1),
+        opacity: 0,
+      });
+    }
+
+    onProgress?.({ status: "Gerando PDF pesquisável...", progress: 95 });
+
+    // Salva o PDF modificado
+    const pdfBytes = await pdfDoc.save();
+    const searchablePdfBlob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+    const searchablePdfUrl = URL.createObjectURL(searchablePdfBlob);
+
+    // Download do PDF pesquisável
+    const link = document.createElement("a");
+    link.href = searchablePdfUrl;
+    link.download = fileName.replace(".pdf", "_pesquisavel.pdf");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(searchablePdfUrl);
+
+    onProgress?.({ status: "Concluído!", progress: 100 });
 
   } catch (error) {
     console.error("Erro ao baixar PDF com OCR:", error);
