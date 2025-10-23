@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Receipt, DollarSign, Users, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { useUser } from "@/hooks/use-user"; // Mantendo useUser para o loading inicial
 
 interface Nota {
   id: string;
@@ -36,8 +35,6 @@ const DashboardOverview = () => {
     },
   });
   
-  const { isLoading: isLoadingUser } = useUser();
-
   // Cálculo das métricas
   const totalNotas = notas.length;
   const valorTotal = notas.reduce((sum, nota) => sum + nota.valor, 0);
@@ -56,7 +53,7 @@ const DashboardOverview = () => {
     });
   };
 
-  if (isLoadingNotas || isLoadingUser) {
+  if (isLoadingNotas) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
