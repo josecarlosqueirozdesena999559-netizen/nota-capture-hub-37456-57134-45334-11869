@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Search, X } from "lucide-react";
+import { Combobox } from "@/components/ui/combobox";
 
 interface NotasFiltersProps {
   searchEmpresa: string;
@@ -11,6 +12,7 @@ interface NotasFiltersProps {
   searchDataFim: string;
   searchValorMin: string;
   searchValorMax: string;
+  companyOptions: { value: string; label: string }[]; // Novo prop
   onSearchEmpresaChange: (value: string) => void;
   onSearchNumeroChange: (value: string) => void;
   onSearchDataInicioChange: (value: string) => void;
@@ -27,6 +29,7 @@ const NotasFilters = ({
   searchDataFim,
   searchValorMin,
   searchValorMax,
+  companyOptions,
   onSearchEmpresaChange,
   onSearchNumeroChange,
   onSearchDataInicioChange,
@@ -57,11 +60,12 @@ const NotasFilters = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="filterEmpresa">Nome da Empresa</Label>
-          <Input
-            id="filterEmpresa"
-            placeholder="Pesquisar empresa..."
+          <Combobox
+            options={companyOptions}
             value={searchEmpresa}
-            onChange={(e) => onSearchEmpresaChange(e.target.value)}
+            onChange={onSearchEmpresaChange}
+            placeholder="Selecione ou pesquise a empresa..."
+            searchPlaceholder="Buscar empresa..."
           />
         </div>
 
