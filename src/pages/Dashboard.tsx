@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Receipt, Download, Trash2, ArrowUpDown } from "lucide-react";
+import { LogOut, Receipt, Download, Trash2, ArrowUpDown, Camera } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import {
   Table,
@@ -19,6 +19,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { downloadPdfWithOcr, type OcrProgress } from "@/utils/pdfOcr";
 import XmlUploader from "@/components/XmlUploader";
+import CameraCapture from "@/components/CameraCapture";
 
 interface Nota {
   id: string;
@@ -43,6 +44,7 @@ const Dashboard = () => {
   const [notas, setNotas] = useState<Nota[]>([]);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [ocrProgress, setOcrProgress] = useState<OcrProgress | null>(null);
+  const [showCamera, setShowCamera] = useState(false);
   
   // Filtros
   const [searchEmpresa, setSearchEmpresa] = useState("");
@@ -205,6 +207,15 @@ const Dashboard = () => {
     setSearchValorMax("");
   };
 
+  const handleImageCapture = async (imageData: string) => {
+    console.log("Imagem capturada:", imageData.substring(0, 50) + "...");
+    toast({
+      title: "Imagem capturada",
+      description: "Imagem foi capturada com sucesso. Aqui você pode processar a imagem.",
+    });
+    setShowCamera(false);
+  };
+
   // Filtrar e ordenar notas
   const filteredAndSortedNotas = useMemo(() => {
     let filtered = [...notas];
@@ -306,7 +317,13 @@ const Dashboard = () => {
           </p>
         </div>
 
-        <XmlUploader onUploadSuccess={fetchNotas} />
+        <div className="flex gap-4 mb-6">
+          <XmlUploader onUploadSuccess={fetchNotas} />
+          <Button onClick={() => setShowCamera(true)} size="lg">
+            <Camera className="w-5 h-5 mr-2" />
+            Testar Upload de Imagem
+          </Button>
+        </div>
 
         <NotasFilters
           searchEmpresa={searchEmpresa}
@@ -446,6 +463,13 @@ const Dashboard = () => {
           </Card>
         )}
       </main>
+
+      {showCamera && (
+        <CameraCapture
+          onCapture={handleImageCapture}
+          onClose={() => setShowCamera(false)}
+        />
+      )}
     </div>
   );
 };
