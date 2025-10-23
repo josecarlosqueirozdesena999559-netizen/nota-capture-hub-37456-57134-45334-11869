@@ -111,14 +111,18 @@ export async function downloadPdfWithOcr(
     const pdfBlob = await response.blob();
     const arrayBuffer = await pdfBlob.arrayBuffer();
 
+    // Cria cópias do arrayBuffer para usar em ambas as bibliotecas
+    const arrayBufferForPdfJs = arrayBuffer.slice(0);
+    const arrayBufferForPdfLib = arrayBuffer.slice(0);
+
     // Carrega o PDF original e extrai texto
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdf = await pdfjsLib.getDocument({ data: arrayBufferForPdfJs }).promise;
     const totalPages = pdf.numPages;
 
     onProgress?.({ status: "Processando OCR...", progress: 10 });
 
     // Carrega o PDF com pdf-lib para adicionar texto
-    const pdfDoc = await PDFDocument.load(arrayBuffer);
+    const pdfDoc = await PDFDocument.load(arrayBufferForPdfLib);
     const pages = pdfDoc.getPages();
 
     // Processa cada página
@@ -176,7 +180,9 @@ export async function downloadPdfWithOcr(
 
     // Salva o PDF modificado
     const pdfBytes = await pdfDoc.save();
-    const searchablePdfBlob = new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+    // Cria uma cópia do buffer para evitar problemas com ArrayBuffer desanexados
+    const pdfBuffer = new Uint8Array(pdfBytes).buffer;
+    const searchablePdfBlob = new Blob([pdfBuffer], { type: "application/pdf" });
     const searchablePdfUrl = URL.createObjectURL(searchablePdfBlob);
 
     // Download do PDF pesquisável
