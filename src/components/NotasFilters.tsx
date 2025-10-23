@@ -10,15 +10,11 @@ interface NotasFiltersProps {
   searchNumero: string;
   searchDataInicio: string;
   searchDataFim: string;
-  searchValorMin: string;
-  searchValorMax: string;
-  companyOptions: { value: string; label: string }[]; // Novo prop
+  companyOptions: { value: string; label: string }[];
   onSearchEmpresaChange: (value: string) => void;
   onSearchNumeroChange: (value: string) => void;
   onSearchDataInicioChange: (value: string) => void;
   onSearchDataFimChange: (value: string) => void;
-  onSearchValorMinChange: (value: string) => void;
-  onSearchValorMaxChange: (value: string) => void;
   onClearFilters: () => void;
 }
 
@@ -27,20 +23,16 @@ const NotasFilters = ({
   searchNumero,
   searchDataInicio,
   searchDataFim,
-  searchValorMin,
-  searchValorMax,
   companyOptions,
   onSearchEmpresaChange,
   onSearchNumeroChange,
   onSearchDataInicioChange,
   onSearchDataFimChange,
-  onSearchValorMinChange,
-  onSearchValorMaxChange,
   onClearFilters,
 }: NotasFiltersProps) => {
   const hasActiveFilters = 
     searchEmpresa || searchNumero || searchDataInicio || 
-    searchDataFim || searchValorMin || searchValorMax;
+    searchDataFim;
 
   return (
     <Card className="p-6 mb-6">
@@ -96,30 +88,6 @@ const NotasFilters = ({
             type="date"
             value={searchDataFim}
             onChange={(e) => onSearchDataFimChange(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="filterValorMin">Valor Mínimo (R$)</Label>
-          <Input
-            id="filterValorMin"
-            type="number"
-            step="0.01"
-            placeholder="0,00"
-            value={searchValorMin}
-            onChange={(e) => onSearchValorMinChange(e.target.value)}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="filterValorMax">Valor Máximo (R$)</Label>
-          <Input
-            id="filterValorMax"
-            type="number"
-            step="0.01"
-            placeholder="0,00"
-            value={searchValorMax}
-            onChange={(e) => onSearchValorMaxChange(e.target.value)}
           />
         </div>
       </div>

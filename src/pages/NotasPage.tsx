@@ -50,8 +50,7 @@ const NotasPage = () => {
   const [searchNumero, setSearchNumero] = useState("");
   const [searchDataInicio, setSearchDataInicio] = useState("");
   const [searchDataFim, setSearchDataFim] = useState("");
-  const [searchValorMin, setSearchValorMin] = useState("");
-  const [searchValorMax, setSearchValorMax] = useState("");
+  // Valor Mínimo e Máximo removidos
   
   // Ordenação
   const [sortField, setSortField] = useState<SortField>('data_emissao');
@@ -147,8 +146,7 @@ const NotasPage = () => {
     setSearchNumero("");
     setSearchDataInicio("");
     setSearchDataFim("");
-    setSearchValorMin("");
-    setSearchValorMax("");
+    // Valor Mínimo e Máximo removidos
   };
 
   // Preparar opções para o Combobox
@@ -185,19 +183,7 @@ const NotasPage = () => {
       );
     }
 
-    if (searchValorMin) {
-      filtered = filtered.filter(nota => {
-        const valorMin = parseFloat(searchValorMin);
-        return !isNaN(valorMin) && nota.valor >= valorMin;
-      });
-    }
-
-    if (searchValorMax) {
-      filtered = filtered.filter(nota => {
-        const valorMax = parseFloat(searchValorMax);
-        return !isNaN(valorMax) && nota.valor <= valorMax;
-      });
-    }
+    // Filtros de valor removidos
 
     // Aplicar ordenação
     filtered.sort((a, b) => {
@@ -217,7 +203,7 @@ const NotasPage = () => {
     });
 
     return filtered;
-  }, [notas, searchEmpresa, searchNumero, searchDataInicio, searchDataFim, searchValorMin, searchValorMax, sortField, sortOrder]);
+  }, [notas, searchEmpresa, searchNumero, searchDataInicio, searchDataFim, sortField, sortOrder]);
 
   if (isLoadingNotas || isLoadingCompanies) {
     return (
@@ -249,15 +235,11 @@ const NotasPage = () => {
         searchNumero={searchNumero}
         searchDataInicio={searchDataInicio}
         searchDataFim={searchDataFim}
-        searchValorMin={searchValorMin}
-        searchValorMax={searchValorMax}
         companyOptions={companyOptions}
         onSearchEmpresaChange={setSearchEmpresa}
         onSearchNumeroChange={setSearchNumero}
         onSearchDataInicioChange={setSearchDataInicio}
         onSearchDataFimChange={setSearchDataFim}
-        onSearchValorMinChange={setSearchValorMin}
-        onSearchValorMaxChange={setSearchValorMax}
         onClearFilters={handleClearFilters}
       />
 
