@@ -18,7 +18,6 @@ import NotasFilters from "@/components/NotasFilters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { downloadPdfWithOcr, type OcrProgress } from "@/utils/pdfOcr";
-import XmlUploader from "@/components/XmlUploader";
 
 interface Nota {
   id: string;
@@ -299,14 +298,20 @@ const Dashboard = () => {
 
       {/* Main Content Desktop */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold mb-2">Gerenciar Notas Fiscais</h2>
-          <p className="text-muted-foreground">
+        <div className="mb-8">
+          <h2 className="text-3xl font-bold mb-2">Minhas Notas Fiscais</h2>
+          <p className="text-muted-foreground mb-4">
             {filteredAndSortedNotas.length} {filteredAndSortedNotas.length === 1 ? 'nota encontrada' : 'notas encontradas'}
           </p>
+          <div className="bg-card border border-border rounded-lg p-4">
+            <p className="text-sm text-muted-foreground">
+              📱 <strong>Captura pelo celular:</strong> Use o app mobile para fotografar e processar notas fiscais
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              💻 <strong>Gerenciamento:</strong> Aqui você visualiza, filtra e baixa DANF (PDF) e OCR (texto extraído)
+            </p>
+          </div>
         </div>
-
-        <XmlUploader onUploadSuccess={fetchNotas} />
 
         <NotasFilters
           searchEmpresa={searchEmpresa}
@@ -330,12 +335,23 @@ const Dashboard = () => {
             <h3 className="text-xl font-semibold mb-2">
               {notas.length === 0 ? "Nenhuma nota cadastrada" : "Nenhuma nota encontrada"}
             </h3>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-4">
               {notas.length === 0 
-                ? "As notas capturadas no celular aparecerão aqui"
+                ? "Capture suas primeiras notas fiscais usando o app mobile"
                 : "Tente ajustar os filtros de pesquisa"
               }
             </p>
+            {notas.length === 0 && (
+              <div className="bg-muted/50 rounded-lg p-4 max-w-md mx-auto">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Como começar:</strong><br />
+                  1. Acesse o app pelo celular<br />
+                  2. Tire foto da nota fiscal<br />
+                  3. Confirme os dados extraídos<br />
+                  4. Volte aqui para baixar DANF e OCR
+                </p>
+              </div>
+            )}
           </Card>
         ) : (
           <Card className="overflow-hidden">
@@ -387,7 +403,7 @@ const Dashboard = () => {
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </Button>
                     </TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead className="text-right">Downloads</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -402,27 +418,31 @@ const Dashboard = () => {
                         R$ {nota.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDownload(nota, false)}
-                            disabled={downloadingId === nota.id}
-                          >
-                            <Download className="w-4 h-4 mr-1" />
-                            {downloadingId === nota.id && !ocrProgress ? "Baixando..." : "Baixar PDF"}
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleDownload(nota, true)}
-                            disabled={downloadingId === nota.id}
-                          >
-                            <Download className="w-4 h-4 mr-1" />
-                            {downloadingId === nota.id && ocrProgress 
-                              ? `${ocrProgress.progress}%` 
-                              : "DANF + OCR"}
-                          </Button>
+                        <div className="flex gap-2 justify-end items-center">
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleDownload(nota, false)}
+                              disabled={downloadingId === nota.id}
+                              className="w-full"
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              {downloadingId === nota.id && !ocrProgress ? "Baixando..." : "DANF (PDF)"}
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDownload(nota, true)}
+                              disabled={downloadingId === nota.id}
+                              className="w-full"
+                            >
+                              <Download className="w-4 h-4 mr-1" />
+                              {downloadingId === nota.id && ocrProgress 
+                                ? `OCR ${ocrProgress.progress}%` 
+                                : "PDF + OCR"}
+                            </Button>
+                          </div>
                           <Button
                             size="sm"
                             variant="ghost"
@@ -433,7 +453,7 @@ const Dashboard = () => {
                           </Button>
                         </div>
                         {downloadingId === nota.id && ocrProgress && (
-                          <p className="text-xs text-muted-foreground mt-1">
+                          <p className="text-xs text-muted-foreground mt-1 text-right">
                             {ocrProgress.status}
                           </p>
                         )}
