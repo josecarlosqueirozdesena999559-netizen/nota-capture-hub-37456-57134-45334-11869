@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Receipt, DollarSign, Users, Loader2, Download } from "lucide-react";
+import { Receipt, DollarSign, Users, Loader2, Download, QrCode } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import GenerateCodeDialog from "@/components/GenerateCodeDialog";
+import { useUser } from "@/hooks/use-user";
 
 interface Nota {
   id: string;
@@ -35,6 +38,9 @@ const DashboardOverview = () => {
       });
     },
   });
+  
+  const [showCodeDialog, setShowCodeDialog] = useState(false);
+  const { user } = useUser();
 
   // Cálculo das métricas
   const totalNotas = notas.length;
@@ -47,13 +53,11 @@ const DashboardOverview = () => {
 
   // Lógica de Exportação (Exportar PDF com notas colocadas no sistema)
   const handleExport = () => {
-    // Implementação simples de exportação de dados para PDF/CSV
     toast({
       title: "Exportação em desenvolvimento",
       description: "A funcionalidade de exportar PDF/CSV com dados filtrados será implementada em breve.",
       variant: "default",
     });
-    // TODO: Implementar a lógica de exportação de PDF com pdf-lib
   };
 
   if (isLoading) {
@@ -113,7 +117,7 @@ const DashboardOverview = () => {
       {/* Informativos e Ações Rápidas */}
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">Ações Rápidas</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card className="p-6 hover:shadow-lg transition-shadow">
             <h4 className="font-bold mb-2">Gerenciar Notas</h4>
             <p className="text-sm text-muted-foreground mb-4">Visualize a lista completa, filtre e baixe os documentos.</p>
@@ -134,8 +138,23 @@ const DashboardOverview = () => {
               </Button>
             </Link>
           </Card>
+          <Card className="p-6 hover:shadow-lg transition-shadow bg-primary/5 border-primary/20">
+            <h4 className="font-bold mb-2 text-primary">Login Mobile Rápido</h4>
+            <p className="text-sm text-muted-foreground mb-4">Gere um código temporário para logar no celular sem senha.</p>
+            <Button size="sm" onClick={() => setShowCodeDialog(true)}>
+              <QrCode className="w-4 h-4 mr-2" />
+              Gerar Código
+            </Button>
+          </Card>
         </div>
       </div>
+      
+      {showCodeDialog && user?.id && (
+        <GenerateCodeDialog 
+          onClose={() => setShowCodeDialog(false)} 
+          userId={user.id}
+        />
+      )}
     </div>
   );
 };
