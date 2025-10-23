@@ -4,19 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { LogOut, Receipt, Download, Trash2, ArrowUpDown } from "lucide-react";
+import { LogOut, Receipt, ArrowUpDown } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import NotasFilters from "@/components/NotasFilters";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import NotasTable from "@/components/NotasTable"; // Importando o novo componente
 import { downloadPdfWithOcr, type OcrProgress } from "@/utils/pdfOcr";
 
 interface Nota {
@@ -355,114 +346,16 @@ const Dashboard = () => {
           </Card>
         ) : (
           <Card className="overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSort('empresa_nome')}
-                        className="hover:bg-transparent"
-                      >
-                        Empresa
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSort('numero_nota')}
-                        className="hover:bg-transparent"
-                      >
-                        Número
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSort('data_emissao')}
-                        className="hover:bg-transparent"
-                      >
-                        Data Emissão
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleSort('valor')}
-                        className="hover:bg-transparent"
-                      >
-                        Valor
-                        <ArrowUpDown className="ml-2 h-4 w-4" />
-                      </Button>
-                    </TableHead>
-                    <TableHead className="text-right">Downloads</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredAndSortedNotas.map((nota) => (
-                    <TableRow key={nota.id}>
-                      <TableCell className="font-medium">{nota.empresa_nome}</TableCell>
-                      <TableCell>{nota.numero_nota}</TableCell>
-                      <TableCell>
-                        {format(new Date(nota.data_emissao), "dd/MM/yyyy", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell>
-                        R$ {nota.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex gap-2 justify-end items-center">
-                          <div className="flex flex-col gap-1">
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleDownload(nota, false)}
-                              disabled={downloadingId === nota.id}
-                              className="w-full"
-                            >
-                              <Download className="w-4 h-4 mr-1" />
-                              {downloadingId === nota.id && !ocrProgress ? "Baixando..." : "DANF (PDF)"}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleDownload(nota, true)}
-                              disabled={downloadingId === nota.id}
-                              className="w-full"
-                            >
-                              <Download className="w-4 h-4 mr-1" />
-                              {downloadingId === nota.id && ocrProgress 
-                                ? `OCR ${ocrProgress.progress}%` 
-                                : "PDF + OCR"}
-                            </Button>
-                          </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDelete(nota.id)}
-                            disabled={downloadingId === nota.id}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        {downloadingId === nota.id && ocrProgress && (
-                          <p className="text-xs text-muted-foreground mt-1 text-right">
-                            {ocrProgress.status}
-                          </p>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+            <NotasTable
+              notas={filteredAndSortedNotas}
+              sortField={sortField}
+              sortOrder={sortOrder}
+              downloadingId={downloadingId}
+              ocrProgress={ocrProgress}
+              onSort={handleSort}
+              onDownload={handleDownload}
+              onDelete={handleDelete}
+            />
           </Card>
         )}
       </main>
