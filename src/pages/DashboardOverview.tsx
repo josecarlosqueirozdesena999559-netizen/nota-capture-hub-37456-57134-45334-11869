@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Receipt, DollarSign, Users, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { useUserMetadata } from "@/hooks/use-user-metadata";
 
 interface Nota {
   id: string;
@@ -35,6 +36,8 @@ const DashboardOverview = () => {
     },
   });
   
+  const { data: userMetadata, isLoading: isLoadingUserMetadata } = useUserMetadata();
+
   // Cálculo das métricas
   const totalNotas = notas.length;
   const valorTotal = notas.reduce((sum, nota) => sum + nota.valor, 0);
@@ -53,7 +56,9 @@ const DashboardOverview = () => {
     });
   };
 
-  if (isLoadingNotas) {
+  const userName = userMetadata?.fullName || "Usuário";
+
+  if (isLoadingNotas || isLoadingUserMetadata) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -64,7 +69,10 @@ const DashboardOverview = () => {
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Dashboard de Resumo</h2>
+        <div>
+          <h1 className="text-3xl font-bold">Olá, {userName}!</h1>
+          <p className="text-muted-foreground mt-1">Bem-vindo ao seu painel de notas fiscais.</p>
+        </div>
         <Button onClick={handleExport} variant="outline">
           <Download className="w-4 h-4 mr-2" />
           Exportar Dados
