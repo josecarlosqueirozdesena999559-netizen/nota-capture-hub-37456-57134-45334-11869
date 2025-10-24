@@ -66,15 +66,16 @@ serve(async (req) => {
     await supabaseAdmin.from('login_codes').delete().eq('code', code);
 
     // 5. Gerar um token JWT para o usuário
+    // O segundo argumento (token_name) é opcional e pode ser a causa do erro em algumas versões.
     const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.generateAuthToken(
       codeData.user_id,
-      'mobile_login', // Nome do token
       { expiresIn: 3600 } // 1 hora de validade para o token
     );
 
     if (tokenError || !tokenData.token) {
       console.error('Erro ao gerar token:', tokenError);
-      throw new Error('Erro interno ao gerar token de login.');
+      // Mensagem de erro mais genérica para evitar expor detalhes internos
+      throw new Error('Falha ao gerar token de login. Verifique a chave de serviço.');
     }
 
     return new Response(
