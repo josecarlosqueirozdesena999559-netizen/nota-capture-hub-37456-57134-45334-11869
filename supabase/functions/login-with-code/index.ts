@@ -18,10 +18,18 @@ serve(async (req) => {
       throw new Error('Código não fornecido');
     }
 
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        console.error('Variáveis de ambiente do Supabase Admin faltando.');
+        throw new Error('Configuração de servidor incompleta. Chaves de ambiente ausentes.');
+    }
+
     // 1. Inicializar o cliente Supabase com privilégios de serviço (Service Role Key)
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY,
       {
         auth: {
           autoRefreshToken: false,
