@@ -8,7 +8,7 @@ const Index = () => {
   const handleGetStarted = () => {
     // Detectar se é mobile ou desktop
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    navigate(isMobile ? "/mobile" : "/auth");
+    navigate(isMobile ? "/mobile-login" : "/auth");
   };
 
   return (
