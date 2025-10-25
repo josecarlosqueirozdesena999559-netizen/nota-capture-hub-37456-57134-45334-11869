@@ -59,23 +59,12 @@ const MobileCodeLogin = () => {
         throw error;
       }
 
-      if (!data?.success || !data?.access_token || !data?.refresh_token) {
+      if (!data?.success || !data?.action_link) {
         throw new Error(data?.error || "Falha na validação do código.");
       }
 
-      console.log("Tokens recebidos, fazendo login...");
-
-      // Usar os tokens para iniciar a sessão
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-      });
-
-      if (sessionError) {
-        console.error("Erro ao criar sessão:", sessionError);
-        throw sessionError;
-      }
-
+      // Redireciona para o magic link para criar a sessão automaticamente
+      window.location.href = data.action_link;
       toast({
         title: "Login realizado!",
         description: "Bem-vindo ao NotaFácil Mobile.",

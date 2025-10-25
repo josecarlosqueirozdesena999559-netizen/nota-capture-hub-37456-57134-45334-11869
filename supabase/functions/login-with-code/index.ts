@@ -65,40 +65,34 @@ serve(async (req) => {
     // 4. Deletar o código imediatamente após a validação (uso único)
     await supabaseAdmin.from('login_codes').delete().eq('code', code);
 
-    // 5. Buscar usuário e gerar tokens de sessão
+    // 5. Buscar usuário e gerar magic link de login
     const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(codeData.user_id);
     
-    if (userError || !user) {
+    if (userError || !user || !user.email) {
       console.error('Erro ao buscar usuário:', userError);
       throw new Error('Usuário não encontrado.');
     }
 
-    // Gerar link de magic link e extrair os tokens
+    // Monta redirect para voltar ao app (se possível)
+    const origin = req.headers.get('origin') || '';
+    const redirectTo = origin ? `${origin}/mobile` : undefined;
+
     const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
-      email: user.email!,
-    });
+      email: user.email,
+      options: redirectTo ? { redirectTo } : undefined,
+    } as any);
 
-    if (linkError || !linkData) {
+    if (linkError || !linkData?.properties?.action_link) {
       console.error('Erro ao gerar link:', linkError);
-      throw new Error('Falha ao gerar token de login.');
+      throw new Error('Falha ao gerar link de login.');
     }
 
-    // Extrair tokens da URL do magic link
-    const url = new URL(linkData.properties.action_link);
-    const access_token = url.searchParams.get('access_token');
-    const refresh_token = url.searchParams.get('refresh_token');
-
-    if (!access_token || !refresh_token) {
-      console.error('Tokens não encontrados no link');
-      throw new Error('Erro ao extrair tokens do link mágico.');
-    }
-
+    // Retorna o link para o cliente redirecionar e criar sessão automaticamente
     return new Response(
       JSON.stringify({
         success: true,
-        access_token,
-        refresh_token,
+        action_link: linkData.properties.action_link,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
