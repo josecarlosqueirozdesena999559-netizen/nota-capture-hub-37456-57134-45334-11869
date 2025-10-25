@@ -1,76 +1,160 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Receipt, Camera, FileText, Zap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card } from "@/components/ui/card";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2, Receipt } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+  const [loginCode, setLoginCode] = useState("");
 
-  const handleGetStarted = () => {
-    // Detectar se é mobile ou desktop
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    navigate(isMobile ? "/mobile-login" : "/auth");
+  useEffect(() => {
+    // Verificar se já está logado
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        navigate("/mobile");
+      }
+    };
+    checkUser();
+
+    // Listener para mudanças de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session) {
+          navigate("/mobile");
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
+
+  const handleCodeLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      if (loginCode.length !== 6) {
+        throw new Error("O código deve ter 6 dígitos.");
+      }
+
+      console.log("Enviando código:", loginCode);
+
+      // Chamar a função de servidor para validar o código
+      const { data, error } = await supabase.functions.invoke('login-with-code', {
+        body: { code: loginCode }
+      });
+
+      console.log("Resposta da função:", { data, error });
+
+      if (error) {
+        console.error("Erro na função:", error);
+        throw error;
+      }
+
+      if (!data?.success || !data?.token) {
+        throw new Error(data?.error || "Falha na validação do código.");
+      }
+
+      console.log("Token recebido, fazendo login...");
+
+      // Usar o token JWT para iniciar a sessão
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.token,
+        refresh_token: data.token,
+      });
+
+      if (sessionError) {
+        console.error("Erro ao criar sessão:", sessionError);
+        throw sessionError;
+      }
+
+      toast({
+        title: "Login realizado!",
+        description: "Bem-vindo ao NotaFácil.",
+      });
+
+      // Navegar para a página de captura
+      navigate("/mobile");
+    } catch (error: any) {
+      console.error("Erro no login:", error);
+      toast({
+        title: "Erro no Login",
+        description: error.message || "Código inválido ou expirado. Gere um novo código.",
+        variant: "destructive",
+      });
+      setLoginCode("");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
-      {/* Hero Section */}
-      <div className="container mx-auto px-4 py-20">
-        <div className="text-center max-w-4xl mx-auto">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-primary rounded-3xl mb-8 shadow-elevated">
-            <Receipt className="w-10 h-10 text-primary-foreground" />
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-background to-secondary/20 p-4">
+      <Card className="w-full max-w-md p-8 shadow-elevated">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center mb-4">
+            <Receipt className="w-8 h-8 text-primary-foreground" />
           </div>
-          
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-            NotaFácil
-          </h1>
-          
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8">
-            Gerencie suas notas fiscais com inteligência artificial
+          <h1 className="text-3xl font-bold text-foreground">NotaFácil</h1>
+          <p className="text-muted-foreground mt-2 text-center">
+            Insira o código para acessar
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={handleGetStarted} className="text-lg">
-              Começar Agora
-            </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate("/auth")}>
-              Fazer Login
-            </Button>
-          </div>
         </div>
 
-        {/* Features */}
-        <div className="grid md:grid-cols-3 gap-8 mt-20 max-w-6xl mx-auto">
-          <div className="bg-card p-8 rounded-2xl shadow-card border border-border hover:shadow-elevated transition-all">
-            <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mb-4">
-              <Camera className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <h3 className="text-xl font-bold mb-3">Captura Inteligente</h3>
-            <p className="text-muted-foreground">
-              Tire foto da nota fiscal pelo celular e extraia os dados automaticamente com IA
+        <form onSubmit={handleCodeLogin} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="loginCode" className="text-base">
+              Código de Acesso
+            </Label>
+            <Input
+              id="loginCode"
+              type="text"
+              inputMode="numeric"
+              placeholder="000000"
+              value={loginCode}
+              onChange={(e) => setLoginCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              required
+              maxLength={6}
+              className="text-2xl text-center tracking-widest font-mono"
+              autoComplete="off"
+              autoFocus
+            />
+            <p className="text-xs text-muted-foreground text-center">
+              Digite o código de 6 dígitos gerado no desktop
             </p>
           </div>
 
-          <div className="bg-card p-8 rounded-2xl shadow-card border border-border hover:shadow-elevated transition-all">
-            <div className="w-12 h-12 bg-gradient-secondary rounded-xl flex items-center justify-center mb-4">
-              <FileText className="w-6 h-6 text-secondary-foreground" />
-            </div>
-            <h3 className="text-xl font-bold mb-3">Organização Total</h3>
-            <p className="text-muted-foreground">
-              Todas suas notas organizadas por data, empresa e valor em um só lugar
-            </p>
-          </div>
+          <Button
+            type="submit"
+            className="w-full"
+            size="lg"
+            disabled={loading || loginCode.length !== 6}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Verificando...
+              </>
+            ) : (
+              "Entrar"
+            )}
+          </Button>
+        </form>
 
-          <div className="bg-card p-8 rounded-2xl shadow-card border border-border hover:shadow-elevated transition-all">
-            <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-              <Zap className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="text-xl font-bold mb-3">Download Rápido</h3>
-            <p className="text-muted-foreground">
-              Acesse e baixe o DANF de qualquer nota com apenas um clique
-            </p>
-          </div>
+        <div className="mt-6 text-center">
+          <p className="text-xs text-muted-foreground">
+            Para gerar um código, acesse o sistema no desktop
+          </p>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
