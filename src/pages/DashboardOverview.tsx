@@ -5,6 +5,7 @@ import { Receipt, DollarSign, Users, Loader2, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
+import { MobileLoginCodeDialog } from "@/components/MobileLoginCodeDialog";
 
 interface Nota {
   id: string;
@@ -66,10 +67,13 @@ const DashboardOverview = () => {
           <h1 className="text-3xl font-bold">Olá, {userName}!</h1>
           <p className="text-muted-foreground mt-1">Bem-vindo ao seu painel de notas fiscais.</p>
         </div>
-        <Button onClick={handleExport} variant="outline">
-          <Download className="w-4 h-4 mr-2" />
-          Exportar Dados
-        </Button>
+        <div className="flex gap-2">
+          <MobileLoginCodeDialog />
+          <Button onClick={handleExport} variant="outline">
+            <Download className="w-4 h-4 mr-2" />
+            Exportar Dados
+          </Button>
+        </div>
       </div>
 
       {/* Cards de Métricas */}
