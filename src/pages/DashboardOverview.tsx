@@ -24,16 +24,9 @@ const fetchAllNotas = async (): Promise<Nota[]> => {
 
 const DashboardOverview = () => {
   const { toast } = useToast();
-  const { data: notas = [], isLoading: isLoadingNotas } = useQuery({
+  const { data: notas = [], isLoading: isLoadingNotas } = useQuery<Nota[], Error>({
     queryKey: ['dashboardMetrics'],
     queryFn: fetchAllNotas,
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao carregar dados",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
   
   const { data: userMetadata, isLoading: isLoadingUserMetadata } = useUserMetadata();

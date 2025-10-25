@@ -35,7 +35,7 @@ const fetchNotas = async (): Promise<Nota[]> => {
 
 const NotasPage = () => {
   const { toast } = useToast();
-  const { data: notas = [], isLoading: isLoadingNotas, refetch: refetchNotas } = useQuery({
+  const { data: notas = [], isLoading: isLoadingNotas, refetch: refetchNotas } = useQuery<Nota[], Error>({
     queryKey: ['notasFiscais'],
     queryFn: fetchNotas,
   });

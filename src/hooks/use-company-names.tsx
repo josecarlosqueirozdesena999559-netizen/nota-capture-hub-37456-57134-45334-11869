@@ -11,23 +11,14 @@ const fetchCompanyNames = async (): Promise<string[]> => {
   if (error) throw error;
 
   // Extrai nomes únicos e remove duplicatas
-  const uniqueNames = Array.from(new Set(data.map((item: any) => item.empresa_nome).filter(Boolean)));
+  const uniqueNames = Array.from(new Set(data.map((item: any) => item.empresa_nome).filter(Boolean))) as string[];
   return uniqueNames;
 };
 
 export function useCompanyNames() {
-  const { toast } = useToast();
-  
-  return useQuery({
+  return useQuery<string[], Error>({
     queryKey: ['companyNames'],
     queryFn: fetchCompanyNames,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao carregar empresas",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 }

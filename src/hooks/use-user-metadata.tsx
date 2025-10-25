@@ -20,18 +20,9 @@ const fetchUserMetadata = async (): Promise<UserMetadata> => {
 };
 
 export function useUserMetadata() {
-  const { toast } = useToast();
-  
-  return useQuery({
+  return useQuery<UserMetadata, Error>({
     queryKey: ['userMetadata'],
     queryFn: fetchUserMetadata,
     staleTime: 1000 * 60 * 60, // 1 hour
-    onError: (error: any) => {
-      toast({
-        title: "Erro ao carregar dados do usuário",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
   });
 }
