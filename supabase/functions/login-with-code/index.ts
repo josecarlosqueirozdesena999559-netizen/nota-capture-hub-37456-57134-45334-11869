@@ -65,23 +65,40 @@ serve(async (req) => {
     // 4. Deletar o código imediatamente após a validação (uso único)
     await supabaseAdmin.from('login_codes').delete().eq('code', code);
 
-    // 5. Gerar um token JWT para o usuário
-    // O segundo argumento (token_name) é opcional e pode ser a causa do erro em algumas versões.
-    const { data: tokenData, error: tokenError } = await supabaseAdmin.auth.admin.generateAuthToken(
-      codeData.user_id,
-      { expiresIn: 3600 } // 1 hora de validade para o token
-    );
+    // 5. Buscar usuário e gerar tokens de sessão
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.admin.getUserById(codeData.user_id);
+    
+    if (userError || !user) {
+      console.error('Erro ao buscar usuário:', userError);
+      throw new Error('Usuário não encontrado.');
+    }
 
-    if (tokenError || !tokenData.token) {
-      console.error('Erro ao gerar token:', tokenError);
-      // Mensagem de erro mais genérica para evitar expor detalhes internos
-      throw new Error('Falha ao gerar token de login. Verifique a chave de serviço.');
+    // Gerar link de magic link e extrair os tokens
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'magiclink',
+      email: user.email!,
+    });
+
+    if (linkError || !linkData) {
+      console.error('Erro ao gerar link:', linkError);
+      throw new Error('Falha ao gerar token de login.');
+    }
+
+    // Extrair tokens da URL do magic link
+    const url = new URL(linkData.properties.action_link);
+    const access_token = url.searchParams.get('access_token');
+    const refresh_token = url.searchParams.get('refresh_token');
+
+    if (!access_token || !refresh_token) {
+      console.error('Tokens não encontrados no link');
+      throw new Error('Erro ao extrair tokens do link mágico.');
     }
 
     return new Response(
       JSON.stringify({
         success: true,
-        token: tokenData.token,
+        access_token,
+        refresh_token,
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -59,16 +59,16 @@ const MobileCodeLogin = () => {
         throw error;
       }
 
-      if (!data?.success || !data?.token) {
+      if (!data?.success || !data?.access_token || !data?.refresh_token) {
         throw new Error(data?.error || "Falha na validação do código.");
       }
 
-      console.log("Token recebido, fazendo login...");
+      console.log("Tokens recebidos, fazendo login...");
 
-      // Usar o token JWT para iniciar a sessão
+      // Usar os tokens para iniciar a sessão
       const { error: sessionError } = await supabase.auth.setSession({
-        access_token: data.token,
-        refresh_token: data.token,
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
       });
 
       if (sessionError) {
